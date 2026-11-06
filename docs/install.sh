@@ -43,8 +43,11 @@ signer="$(shasum -a 256 "$tmp/cert0" | awk '{print $1}')"
 [[ "$signer" == "$CERT_SHA256" ]] || fail "the app isn't signed with Task Coach's certificate."
 
 # Replace any running or older copy.
+# Ask it to quit, then make sure: osascript reports success even when it matched nothing.
 if pgrep -x TaskCoach >/dev/null; then
-  osascript -e 'quit app id "io.github.alvasi.taskcoach"' >/dev/null 2>&1 || pkill -x TaskCoach || true
+  osascript -e 'quit app id "io.github.alvasi.taskcoach"' >/dev/null 2>&1 || true
+  for _ in 1 2 3 4 5; do pgrep -x TaskCoach >/dev/null || break; sleep 1; done
+  pkill -x TaskCoach 2>/dev/null || true
   sleep 1
 fi
 mkdir -p "$DEST"
