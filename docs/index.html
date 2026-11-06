@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Coach</title>
+<meta name="description" content="A macOS app that quizzes you on the work you do with AI coding agents, and turns each ticket into a lesson in software engineering practice.">
+<meta property="og:title" content="Task Coach">
+<meta property="og:description" content="Know your own work. Quizzes on what you and your AI coding agent actually did, tied to a fact-checked playbook of engineering practice.">
+<meta property="og:image" content="https://alvasi.github.io/task-coach/img/home.png">
+<link rel="icon" href="img/favicon.png">
+<link rel="preload" href="fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* Source Serif 4 (SIL Open Font License, see fonts/OFL.txt), bundled so every browser shows the same type. */
+  @font-face { font-family: "Source Serif 4"; src: url("fonts/source-serif-4.woff2") format("woff2");
+               font-weight: 200 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Source Serif 4"; src: url("fonts/source-serif-4-italic.woff2") format("woff2");
+               font-weight: 200 900; font-style: italic; font-display: swap; }
+  :root {
+    --paper: #F6F1E6; --raised: #FBF8F1; --sidebar: #EDE5D4;
+    --ink: #1F1B16; --muted: #524636; --faint: #6E604A;
+    --rule: #E4DCCB; --stroke: #D8CDB6; --margin: #D9826F;
+    --pencil: #C8402D; --good: #3E7D4F;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1C1916; --raised: #25211C; --sidebar: #161411;
+      --ink: #EDE6D6; --muted: #C9BEA8; --faint: #A89B83;
+      --rule: #2A2621; --stroke: #3A342C; --margin: #6E3A2F;
+      --pencil: #E2705B; --good: #7DBB8C;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; color: var(--ink); font: 18px/1.6 var(--serif);
+    background-color: var(--paper);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+  }
+  a { color: var(--pencil); text-underline-offset: 3px; }
+  img { max-width: 100%; height: auto; display: block; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header { display: flex; align-items: center; gap: 10px; padding: 22px 0; }
+  header img { width: 30px; height: 30px; }
+  header .name { font-weight: 700; font-size: 19px; }
+  header nav { margin-left: auto; display: flex; gap: 18px; font: 600 14px var(--sans); }
+  header nav a { color: var(--muted); text-decoration: none; }
+  header nav a:hover { color: var(--pencil); }
+
+  /* Labels in the margin style */
+  .label { font: 700 12px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--pencil); margin: 0 0 12px; }
+
+  /* Hero */
+  .hero { padding: 40px 0 28px; border-left: 1px solid var(--margin); padding-left: 28px; margin-left: -28px; }
+  h1 { font-size: clamp(40px, 7vw, 68px); line-height: 1.04; margin: 0 0 18px; letter-spacing: -.01em; }
+  .lede { font-size: clamp(19px, 2.4vw, 22px); color: var(--muted); max-width: 680px; margin: 0 0 30px; }
+  .install {
+    display: flex; align-items: center; gap: 12px; max-width: 760px;
+    background: var(--raised); border: 1.5px solid var(--ink); padding: 14px 14px 14px 18px; transform: rotate(-.3deg);
+  }
+  .install code { font: 14.5px/1.4 var(--mono); flex: 1; overflow-x: auto; white-space: nowrap; color: var(--ink); }
+  .btn {
+    font: 700 13px var(--sans); letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+    color: var(--raised); background: var(--pencil); border: 0; padding: 10px 16px; white-space: nowrap; text-decoration: none;
+  }
+  .btn:active { transform: translateY(1px); }
+  .meta { font: 14px var(--sans); color: var(--faint); margin: 14px 0 0; }
+  .meta a { color: var(--muted); }
+  .shot { margin: 44px 0 0; border: 1px solid var(--stroke); box-shadow: 0 18px 40px rgba(60, 40, 10, .14); }
+
+  /* Sections */
+  section { padding: 64px 0 8px; }
+  h2 { font-size: clamp(28px, 4vw, 38px); line-height: 1.15; margin: 0 0 14px; }
+  h3 { font-size: 21px; margin: 0 0 6px; }
+  p { margin: 0 0 16px; }
+  .muted { color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 44px; align-items: start; }
+  .two > *, .gallery > * { min-width: 0; }  /* let wide screenshots shrink instead of stretching the column */
+  .chain { display: grid; gap: 14px; margin: 22px 0 0; }
+  .step { background: var(--raised); border: 1px solid var(--stroke); padding: 16px 18px; }
+  .step .tag { font: 700 11px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--stroke); padding: 2px 6px; display: inline-block; margin-bottom: 8px; }
+  .step.transfer .tag { color: var(--pencil); border-color: var(--pencil); }
+  .step p { margin: 0; font-size: 17px; }
+  .step .ex { color: var(--muted); font-style: italic; margin-top: 6px; }
+  .phone { width: 100%; max-width: 400px; justify-self: center; border: 1px solid var(--stroke); box-shadow: 0 14px 30px rgba(60, 40, 10, .12); }
+
+  .list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 14px; }
+  .list li { padding-left: 26px; position: relative; }
+  .list li::before { content: "✎"; position: absolute; left: 0; color: var(--pencil); }
+  .list b { font-weight: 700; }
+  .cite { font-size: 15px; color: var(--faint); }
+
+  .cards { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 0; }
+  .card { background: var(--raised); border: 1px solid var(--stroke); box-shadow: 1px 2px 0 var(--rule); padding: 7px 11px; font-size: 15.5px; }
+  .card:nth-child(odd) { transform: rotate(.5deg); }
+  .card:nth-child(even) { transform: rotate(-.6deg); }
+
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin: 26px 0 0; }
+  .gallery figure { margin: 0; }
+  .gallery img { border: 1px solid var(--stroke); }
+  figcaption { font-size: 15px; color: var(--muted); margin-top: 8px; font-style: italic; }
+
+
+  footer { padding: 70px 0 40px; font: 14px var(--sans); color: var(--faint); display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 760px) {
+    body { font-size: 17px; }
+    .hero { border-left: 0; padding-left: 0; margin-left: 0; }
+    .two, .gallery { grid-template-columns: 1fr; }
+    header nav { gap: 12px; }
+    header nav a.hide-sm { display: none; }
+    .install { flex-direction: column; align-items: stretch; transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="img/icon.png" alt="" width="30" height="30">
+    <span class="name">Task Coach</span>
+    <nav>
+      <a class="hide-sm" href="#how">How it works</a>
+      <a href="https://github.com/alvasi/task-coach">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <p class="label">For engineers who work with AI agents</p>
+    <h1>Know your own work.</h1>
+    <p class="lede">Task Coach quizzes you on what you and your AI coding agent actually did, then turns each ticket into a lesson in software engineering practice. Three questions at a time, from your menu bar.</p>
+
+    <div class="install">
+      <code id="cmd">curl -fsSL https://alvasi.github.io/task-coach/install.sh | bash</code>
+      <button class="btn" id="copy" type="button">Copy</button>
+    </div>
+    <p class="meta">macOS 14 or later · needs <a href="https://claude.com/claude-code">Claude Code</a> · free and open source (MIT) · <a href="https://github.com/alvasi/task-coach/releases/latest">download the app</a> · <a href="https://github.com/alvasi/task-coach#development">build from source</a></p>
+
+    <picture>
+      <source srcset="img/home-dark.png" media="(prefers-color-scheme: dark)">
+      <img class="shot" src="img/home.png" width="1960" height="1280" alt="Task Coach's home screen: an Up next card with two questions due for review, this week's tickets, skill chapters and a shelf of things known cold.">
+    </picture>
+  </div>
+
+  <section>
+    <p class="label">The problem</p>
+    <h2>Skimming isn't understanding.</h2>
+    <p class="muted" style="max-width:720px">When an agent writes most of the code, it's easy to approve work you couldn't explain. Then your lead asks why the bug happened, or how the fix works, and the details are gone. Task Coach checks that the big picture of each task stuck, and grows your general engineering judgement while it does.</p>
+  </section>
+
+  <section id="how">
+    <div class="two">
+      <div>
+        <p class="label">How a quiz works</p>
+        <h2>Your ticket, the practice behind it, then the practice somewhere new.</h2>
+        <div class="chain">
+          <div class="step">
+            <span class="tag">Your ticket</span>
+            <p>What happened in your work, and why.</p>
+            <p class="ex">Why did the unread badge look "flaky" to the person who reported it?</p>
+          </div>
+          <div class="step">
+            <span class="tag">Name the practice</span>
+            <p>Which general practice this work shows, or would have caught it sooner.</p>
+            <p class="ex">If it fixes itself when you wait, suspect a cache.</p>
+          </div>
+          <div class="step transfer">
+            <span class="tag">Transfer</span>
+            <p>The same practice in a scenario that has nothing to do with your codebase.</p>
+            <p class="ex">A booking API's prices are sometimes out of date for a few minutes…</p>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:22px">Answers about your work must quote your session, and the app throws away any question whose quote isn't really there. If one still slips through, "This answer is wrong" takes it back out of your stats.</p>
+      </div>
+      <img class="phone" src="img/question.png" width="880" height="1800" alt="An answered question: the right answer highlighted, a bold takeaway, a short explanation, a small diagram, and a note that it's now known cold.">
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Built on learning research</p>
+    <h2>Designed so it sticks.</h2>
+    <ul class="list">
+      <li><b>Recall beats rereading.</b> Answering questions with feedback is one of the most reliable ways to remember. <span class="cite">Rowland, Psychological Bulletin, 2014</span></li>
+      <li><b>Spaced review.</b> Missed or guessed questions come back 1, 3 and 7 days later, and retire after three correct answers. <span class="cite">Latimier, Peyre &amp; Ramus, Educational Psychology Review, 2021</span></li>
+      <li><b>Say how sure you are first.</b> Mistakes you were certain about are the easiest to fix once you see why, so they come back first. <span class="cite">Butterfield &amp; Metcalfe, 2001</span></li>
+      <li><b>Short sittings.</b> Three questions, then a break. Stop after any question; the rest wait for later.</li>
+      <li><b>Progress you can see.</b> Things you answer right and sure become cards on a "known cold" shelf, and each skill moves through chapters I to V. No streaks, no points.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="label">A fact-checked playbook</p>
+    <h2>Best practice, not just what your code happened to do.</h2>
+    <p class="muted" style="max-width:740px">Every practice a quiz teaches comes from <a href="https://github.com/alvasi/task-coach/blob/main/playbook.md">the playbook</a>: 92 rules across ten skills, each checked against the page it cites. When your work fell short of a practice, the quiz says so.</p>
+    <div class="cards">
+      <span class="card">Google's engineering practices</span>
+      <span class="card">Google SRE books</span>
+      <span class="card">Software Engineering at Google</span>
+      <span class="card">SOLID (Martin, Liskov, Meyer)</span>
+      <span class="card">Martin Fowler</span>
+      <span class="card">AWS Builders' Library</span>
+      <span class="card">OWASP Top 10</span>
+      <span class="card">DORA</span>
+      <span class="card">Designing Data-Intensive Applications</span>
+      <span class="card">Agans' 9 debugging rules</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">See where you stand</p>
+    <h2>Skills, review, and every answer you've given.</h2>
+    <div class="gallery">
+      <figure>
+        <img src="img/skill.png" width="880" height="1200" alt="A skill page for Debugging: chapter I, a Practise this skill button, one review question due, and the skill's playbook practices.">
+        <figcaption>Click any skill to practise it directly.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/history.png" width="880" height="1200" alt="Past answers grouped by ticket, one opened to show your answer, the right answer and your confidence.">
+        <figcaption>Past answers, with the proof from your session.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Privacy</p>
+    <h2>Your work stays on your Mac.</h2>
+    <ul class="list">
+      <li>Everything is stored locally, in <code>~/Library/Application Support/TaskCoach</code>.</li>
+      <li>To write a quiz, a condensed copy of your recent sessions goes to Claude through your own <code>claude</code> CLI, the same way Claude Code itself works. Nothing else leaves your Mac.</li>
+      <li>Questions are told never to include customer names, contact details or message content.</li>
+      <li>An optional Linear key is kept in your login Keychain.</li>
+    </ul>
+  </section>
+
+
+  <footer>
+    <span>Task Coach · MIT licence</span>
+    <a href="https://github.com/alvasi/task-coach">Source on GitHub</a>
+    <a href="https://github.com/alvasi/task-coach/releases">Releases</a>
+    <span>Made by <a href="https://alvasi.github.io/">Alva Si</a></span>
+  </footer>
+
+</div>
+<script>
+  document.getElementById("copy").addEventListener("click", function () {
+    var btn = this, text = document.getElementById("cmd").textContent;
+    function done() { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById("cmd"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand("copy"); done(); } catch (e) { btn.textContent = "Press ⌘C"; }
+    }
+  });
+</script>
+</body>
+</html>

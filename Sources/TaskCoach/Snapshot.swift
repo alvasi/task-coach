@@ -74,6 +74,36 @@ enum Snapshot {
         print("Wrote snapshots to \(outDir.path)")
     }
 
+    /// `TaskCoach --page-shots <dir>`: the screenshots for the project page, at 2x so they're sharp.
+    static func pageShots(outDir: URL) {
+        _ = NSApplication.shared
+        try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+        let window = NSSize(width: 980, height: 640)
+        func shot<V: View>(_ name: String, _ view: V, _ size: NSSize, screen: Screen, quiz: Quiz? = nil, dark: Bool = false) {
+            let nav = Navigator()
+            nav.screen = screen
+            if let quiz { nav.open(quiz) }
+            let content = view.environmentObject(model()).environmentObject(nav)
+                .frame(width: size.width, height: size.height)
+                .scaleEffect(2, anchor: .topLeading)
+                .frame(width: size.width * 2, height: size.height * 2, alignment: .topLeading)
+            render(content, size: NSSize(width: size.width * 2, height: size.height * 2), dark: dark,
+                   to: outDir.appendingPathComponent("\(name).png"))
+        }
+        shot("home", MainWindowView(), window, screen: .tasks)
+        shot("home-dark", MainWindowView(), window, screen: .tasks, dark: true)
+        shot("skills", MainWindowView(), window, screen: .skills)
+        shot("history", RootView(openWindow: {}), NSSize(width: 440, height: 600), screen: .history)
+        shot("question", QuizView(quiz: sampleQuiz, index: 1, results: [2], preset: QuestionPreset(pick: 1, confidence: .fairlySure,
+              outcome: AnswerOutcome(becameKnown: true, skill: .debugging, chapterBefore: 1, chapterAfter: 1,
+                                     newMilestones: [.firstKnown], known: 2))),
+             NSSize(width: 440, height: 900), screen: .tasks)
+        SkillsView.openForSnapshot = .debugging
+        shot("skill", RootView(openWindow: {}), NSSize(width: 440, height: 600), screen: .skills)
+        SkillsView.openForSnapshot = nil
+        print("Wrote page screenshots to \(outDir.path)")
+    }
+
     /// Writes the 1024px app icon artwork (transparent corners) for scripts/make-icon.sh.
     static func icon(to url: URL) {
         _ = NSApplication.shared
@@ -138,7 +168,7 @@ enum Snapshot {
             KnownItem(skill: .readingCode, text: "Dedicated list stores config IDs", taskKey: "DEMO-142"),
             KnownItem(skill: .readingCode, text: "The worker retries three times, then dead-letters", taskKey: "OPS-77"),
             KnownItem(skill: .readingCode, text: "Snooze writes go through one API", taskKey: "DEMO-101"),
-            KnownItem(skill: .readingCode, text: "HEVC is a codec, not a file type", taskKey: "DEMO-155"),
+            KnownItem(skill: .testing, text: "A test that has never failed proves nothing", taskKey: "DEMO-155"),
             KnownItem(skill: .debugging, text: "TTL explains \"flaky\" bugs", taskKey: "DEMO-101"),
             KnownItem(skill: .design, text: "Events fan out to every cache that cares", taskKey: "DEMO-101"),
         ]
@@ -198,21 +228,17 @@ enum Snapshot {
             DiagramEdge(from: "api", to: "cache", label: nil, style: "missing"),
         ])
 
-    private static let branch = Diagram(caption: "What really happens to each file",
+    private static let branch = Diagram(caption: "Why the badge fixed itself",
         nodes: [
-            DiagramNode(id: "up", label: "File upload", col: 0, row: 1, highlight: nil),
-            DiagramNode(id: "mp4", label: "video/mp4?", col: 1, row: 1, highlight: nil),
-            DiagramNode(id: "sniff", label: "Sniff codec", col: 2, row: 0, highlight: nil),
-            DiagramNode(id: "err", label: "400 if HEVC", col: 3, row: 0, highlight: nil),
-            DiagramNode(id: "conv", label: "Handler converts", col: 2, row: 2, highlight: nil),
-            DiagramNode(id: "meta", label: "Send to Meta", col: 3, row: 2, highlight: nil),
+            DiagramNode(id: "snooze", label: "Snooze", col: 0, row: 0, highlight: nil),
+            DiagramNode(id: "db", label: "Database", col: 1, row: 0, highlight: nil),
+            DiagramNode(id: "cache", label: "Unread cache", col: 1, row: 1, highlight: true),
+            DiagramNode(id: "badge", label: "Badge", col: 2, row: 1, highlight: nil),
         ],
         edges: [
-            DiagramEdge(from: "up", to: "mp4", label: nil, style: "solid"),
-            DiagramEdge(from: "mp4", to: "sniff", label: "yes", style: "solid"),
-            DiagramEdge(from: "sniff", to: "err", label: nil, style: "solid"),
-            DiagramEdge(from: "mp4", to: "conv", label: "no", style: "solid"),
-            DiagramEdge(from: "conv", to: "meta", label: nil, style: "solid"),
+            DiagramEdge(from: "snooze", to: "db", label: "saves", style: "solid"),
+            DiagramEdge(from: "db", to: "cache", label: "every 5 min", style: "dashed"),
+            DiagramEdge(from: "cache", to: "badge", label: nil, style: "solid"),
         ])
 
     private static let fixed = Diagram(caption: "After the fix",

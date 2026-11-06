@@ -21,8 +21,7 @@ an example of a wider practice from a fact-checked playbook.
 
 ## Requirements
 
-- macOS 14 or later
-- Xcode Command Line Tools, to build it (`xcode-select --install`)
+- macOS 14 or later, on Apple silicon or Intel
 - [Claude Code](https://claude.com/claude-code), logged in. Task Coach reads its session history and
   uses the `claude` CLI to write and grade questions, so it counts against your Claude plan.
 - Optional: a Linear personal API key, to see assigned tickets you haven't started in Claude yet.
@@ -30,13 +29,22 @@ an example of a wider practice from a fact-checked playbook.
 ## Install
 
 ```bash
-git clone https://github.com/alvasi/task-coach.git
-cd task-coach
-./install.sh
+curl -fsSL https://alvasi.github.io/task-coach/install.sh | bash
 ```
 
-This builds the app on your Mac and puts it in `~/Applications`. Building it yourself avoids
-macOS blocking an unsigned download.
+[The installer](docs/install.sh) downloads the latest release, checks its checksum and that it's signed
+with Task Coach's own certificate, then puts it in `~/Applications` and opens it. Run it again to update.
+
+Other ways:
+
+- **Download** `TaskCoach.zip` from [Releases](https://github.com/alvasi/task-coach/releases/latest).
+  macOS blocks apps downloaded in a browser until you allow them once: try to open it, then go to
+  System Settings › Privacy & Security and click Open Anyway.
+- **Build from source** with the Xcode Command Line Tools (`xcode-select --install`):
+  `git clone https://github.com/alvasi/task-coach.git && cd task-coach && scripts/build-app.sh --install`
+
+Releases are signed with the project's own certificate, not an Apple Developer ID, so they aren't
+notarised. That keeps the app's identity stable across updates; you're trusting this repo.
 
 If quizzes fail with a login error, run `claude` in Terminal and type `/login`.
 
@@ -75,6 +83,15 @@ Debug helpers (after `swift build`):
 - `.build/debug/TaskCoach --snapshot ./snaps` renders every screen with placeholder data.
 
 Token use per call is logged to `~/Library/Application Support/TaskCoach/usage.jsonl`.
+
+## Releasing
+
+1. Once: `scripts/make-signing-identity.sh`, then store the two secrets it prints on the repo.
+2. Bump `VERSION`, add a section to `CHANGELOG.md`, commit, and push a tag `v<VERSION>`.
+3. The release workflow builds a universal app, signs it, and publishes `TaskCoach.zip` with its checksum.
+
+The project page is `docs/` on GitHub Pages; `.build/debug/TaskCoach --page-shots docs/img` renders its
+screenshots.
 
 ## Licence
 

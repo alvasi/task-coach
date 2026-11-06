@@ -3,6 +3,10 @@ import SwiftUI
 
 // Debug helpers: `TaskCoach --scan` lists tasks, `TaskCoach --prompt <task key>` prints the quiz prompt.
 let args = CommandLine.arguments
+if let i = args.firstIndex(of: "--page-shots"), i + 1 < args.count {
+    MainActor.assumeIsolated { Snapshot.pageShots(outDir: URL(fileURLWithPath: args[i + 1])) }
+    exit(0)
+}
 if let i = args.firstIndex(of: "--icon"), i + 1 < args.count {
     MainActor.assumeIsolated { Snapshot.icon(to: URL(fileURLWithPath: args[i + 1])) }
     exit(0)
